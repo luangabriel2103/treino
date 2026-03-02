@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Treino Iniciante</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#0D0D14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Treino" />
+  <meta name="description" content="Rotina de treino semanal para iniciantes na academia" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="./manifest.json" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #0D0D14; overscroll-behavior: none; }
+    body { font-family: 'Bebas Neue', cursive; color: #fff; }
+
+    #app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; padding-bottom: env(safe-area-inset-bottom); }
+
+    .glow { position: fixed; width: 350px; height: 350px; border-radius: 50%; filter: blur(110px); opacity: 0.08; pointer-events: none; top: -80px; right: -80px; transition: background 0.5s; z-index: 0; }
+
+    .header { padding: calc(env(safe-area-inset-top) + 36px) 22px 20px; position: relative; z-index: 1; }
+    .header-label { font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 4px; }
+    .header-title { font-size: clamp(44px, 10vw, 64px); line-height: 1; letter-spacing: 3px; }
+    .header-focus { font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.4); letter-spacing: 2px; margin-top: 4px; }
+    .header-stats { display: flex; gap: 16px; margin-top: 14px; font-family: 'Nunito', sans-serif; font-size: 12px; color: rgba(255,255,255,0.35); }
+    .progress-track { height: 5px; background: rgba(255,255,255,0.07); border-radius: 10px; overflow: hidden; margin-top: 10px; }
+    .progress-fill { height: 100%; border-radius: 10px; transition: width 0.5s cubic-bezier(.23,1,.32,1); }
+
+    .day-nav { display: flex; gap: 7px; padding: 0 22px 22px; position: relative; z-index: 1; }
+    .day-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 8px; border: 1.5px solid rgba(255,255,255,0.08); border-radius: 14px; background: transparent; color: rgba(255,255,255,0.35); cursor: pointer; transition: all 0.2s ease; flex: 1; font-family: 'Bebas Neue', cursive; font-size: 15px; }
+    .day-btn:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); }
+    .day-btn.active { border-color: transparent; color: #000; transform: scale(1.04); box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
+    .day-btn .done-dot { font-size: 10px; }
+
+    .ex-list { padding: 0 22px 40px; position: relative; z-index: 1; }
+
+    .ex-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 18px; padding: 16px 18px; margin-bottom: 12px; transition: background 0.2s ease; }
+    .ex-card:hover { background: rgba(255,255,255,0.055); }
+    .ex-card.done { opacity: 0.35; }
+
+    .ex-row { display: flex; align-items: flex-start; gap: 14px; }
+
+    .check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; transition: all 0.2s; }
+    .check.done { border-color: transparent; }
+    .check.done::after { content: '✓'; color: #000; font-size: 13px; font-weight: bold; font-family: 'Nunito', sans-serif; }
+
+    .ex-info { flex: 1; }
+    .ex-name { font-size: 20px; letter-spacing: 1px; line-height: 1.15; margin-bottom: 10px; cursor: pointer; }
+    .ex-name.done { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.25); }
+
+    .ex-badges { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+    .badge { font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .badge-rest { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); }
+
+    .how-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: rgba(255,255,255,0.5); font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 700; padding: 4px 12px; cursor: pointer; letter-spacing: 0.5px; transition: all 0.15s; text-transform: uppercase; }
+    .how-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+    .ex-num { font-family: 'Bebas Neue', cursive; font-size: 28px; line-height: 1; align-self: center; }
+
+    /* Expanded section */
+    .ex-expanded { margin-top: 16px; animation: slideDown 0.25s ease; }
+    .intro-box { padding: 12px 14px; border-radius: 12px; margin-bottom: 14px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.75); line-height: 1.6; }
+
+    .tabs { display: flex; gap: 6px; margin-bottom: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 4px; }
+    .tab-btn { flex: 1; padding: 8px 0; border: none; border-radius: 8px; font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.15s; letter-spacing: 0.5px; text-transform: uppercase; background: transparent; color: rgba(255,255,255,0.4); }
+    .tab-btn.active { color: #000; }
+
+    .steps-list { list-style: none; }
+    .step-item { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .step-item:last-child { border-bottom: none; }
+    .step-num { min-width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; font-family: 'Nunito', sans-serif; flex-shrink: 0; margin-top: 2px; }
+    .step-text { font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.78); line-height: 1.6; }
+
+    .info-box { padding: 14px; border-radius: 12px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.78); line-height: 1.7; }
+    .mistake-box { background: rgba(255,80,80,0.07); border: 1px solid rgba(255,80,80,0.2); color: rgba(255,180,180,0.85); }
+
+    /* Completion banner */
+    .complete-banner { text-align: center; padding: 28px 20px; border-radius: 20px; margin-top: 8px; }
+    .complete-banner .trophy { font-size: 36px; margin-bottom: 6px; }
+    .complete-banner .title { font-size: 30px; letter-spacing: 2px; }
+    .complete-banner .sub { font-family: 'Nunito', sans-serif; font-size: 14px; color: rgba(255,255,255,0.45); margin-top: 6px; }
+
+    /* Install banner */
+    #install-banner { display: none; position: fixed; bottom: calc(env(safe-area-inset-bottom) + 16px); left: 50%; transform: translateX(-50%); width: calc(100% - 44px); max-width: 436px; background: #1E1E2E; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 14px 18px; z-index: 1000; box-shadow: 0 8px 32px rgba(0,0,0,0.6); animation: slideUp 0.3s ease; }
+    .install-inner { display: flex; align-items: center; gap: 14px; }
+    .install-icon { font-size: 28px; flex-shrink: 0; }
+    .install-text { flex: 1; font-family: 'Nunito', sans-serif; }
+    .install-text strong { display: block; font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 2px; }
+    .install-text span { font-size: 12px; color: rgba(255,255,255,0.5); }
+    .install-btns { display: flex; gap: 8px; margin-top: 0; flex-shrink: 0; }
+    .btn-install { background: #fff; color: #000; border: none; border-radius: 8px; padding: 8px 14px; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 800; cursor: pointer; }
+    .btn-close { background: transparent; color: rgba(255,255,255,0.4); border: none; font-size: 18px; cursor: pointer; padding: 4px; }
+
+    @keyframes slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes slideUp { from{opacity:0;transform:translate(-50%,20px)} to{opacity:1;transform:translate(-50%,0)} }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="glow" id="glow"></div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-label" id="header-label">🏋️ Treino para Iniciantes</div>
+    <div class="header-title" id="header-title">SEGUNDA</div>
+    <div class="header-focus" id="header-focus">💪 PEITO</div>
+    <div class="header-stats">
+      <span>Hoje: <span id="today-count" style="font-weight:700">0/5</span></span>
+      <span>|</span>
+      <span>Semana: <span id="week-count" style="color:rgba(255,255,255,0.6);font-weight:700">0/25</span></span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- Day nav -->
+  <div class="day-nav" id="day-nav"></div>
+
+  <!-- Exercise list -->
+  <div class="ex-list" id="ex-list"></div>
+</div>
+
+<!-- Install banner -->
+<div id="install-banner">
+  <div class="install-inner">
+    <div class="install-icon">🏋️</div>
+    <div class="install-text">
+      <strong>Instalar Treino Iniciante</strong>
+      <span>Adicione à tela inicial para acessar offline</span>
+    </div>
+    <div class="install-btns">
+      <button class="btn-close" id="close-install">✕</button>
+      <button class="btn-install" id="confirm-install">Instalar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+const DAYS = ["Segunda","Terça","Quarta","Quinta","Sexta"];
+
+const DATA = {
+  Segunda: {
+    label:"SEG", focus:"PEITO", emoji:"💪", color:"#FF5C5C",
+    exercises:[
+      { name:"Supino Reto com Halteres", sets:"3x12", rest:"90s",
+        intro:"Esse exercício trabalha a parte central do peito. Você vai deitar num banco e empurrar os pesos para cima.",
+        steps:["🛏️ Deite de costas no banco reto. Seus pés devem estar apoiados firmes no chão, um de cada lado do banco.","🤲 Pegue um haltere em cada mão. Segure com a palma da mão virada para os seus pés (para frente).","📐 Dobre os cotovelos e posicione os halteres na altura do seu peito — como se fossem duas chamas de vela ao lado do seu peito.","😤 Respire fundo e empurre os dois halteres para cima ao mesmo tempo, como se quisesse afastar o teto de você.","⛔ Não trave os cotovelos lá em cima — deixe levemente dobrados.","⬇️ Desça os halteres devagar, contando 3 segundos, até sentir o peito esticar. Essa é 1 repetição.","🔁 Repita 12 vezes. Isso é 1 série. Descanse 90 segundos e faça mais 2 séries."],
+        mistakes:"Erro de iniciante: deixar os cotovelos abrirem demais para os lados (como asas). Mantenha os cotovelos a uns 45° do corpo — nem colados no peito, nem totalmente abertos.",
+        feel:"Você deve sentir: uma 'queimação' na parte central e nas laterais do peito durante o exercício." },
+      { name:"Supino Inclinado na Máquina", sets:"3x12", rest:"90s",
+        intro:"Parecido com o exercício anterior, mas aqui usamos a máquina (mais seguro para iniciantes) e o banco fica inclinado, trabalhando a parte de cima do peito.",
+        steps:["🪑 Sente na máquina e ajuste o banco para que as alças fiquem na altura do alto do seu peito (perto das clavículas).","📏 Encoste completamente as costas no encosto — não fique curvado para frente.","🤲 Segure as alças com as palmas das mãos viradas para frente (para fora).","😤 Inspire. Empurre as alças para frente e levemente para cima até os braços ficarem quase retos.","⛔ Não bata os pesos e não trave os cotovelos.","⬇️ Traga os cotovelos de volta devagar até sentir o peito esticar. Isso é 1 repetição.","🔁 Repita 12 vezes. Descanse 90 segundos. Faça 3 séries no total."],
+        mistakes:"Erro de iniciante: soltar o peso de golpe na volta, sem controlar. A descida deve ser lenta — o peito trabalha tanto na ida quanto na volta!",
+        feel:"Você deve sentir: a parte superior do peito (próximo ao ombro) trabalhando." },
+      { name:"Crossover na Polia (baixo)", sets:"3x15", rest:"60s",
+        intro:"Exercício feito na máquina de cabos (aquelas com roldanas). Você vai puxar os cabos de baixo para cima e para o centro. Ótimo para 'desenhar' o peito.",
+        steps:["⚙️ Posicione as duas polias na parte mais BAIXA da máquina. Encaixe as alças.","🧍 Fique de pé no centro da máquina. Dê um pequeno passo para frente com um dos pés para ter equilíbrio.","🤲 Segure uma alça em cada mão com os braços abertos para os lados e levemente para baixo.","🔒 Dobre levemente os cotovelos e TRAVE nessa posição — os cotovelos não dobram mais durante o exercício.","🫂 Puxe as alças para cima e para o centro na sua frente, como se fosse abraçar alguém bem forte.","✊ Quando as mãos se encontrarem na frente do seu peito, aperte o peito por 2 segundos.","↩️ Abra os braços de volta devagar, sem deixar o peso 'puxar' você de golpe. Isso é 1 repetição.","🔁 Repita 15 vezes. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: dobrar os cotovelos para puxar (vira um exercício de bíceps). Os braços devem permanecer praticamente retos — o movimento vem do peito, não dos braços.",
+        feel:"Você deve sentir: o centro e a parte interna do peito trabalhando, e uma contração forte quando as mãos se encontram." },
+      { name:"Flexão de Braço (joelhos no chão)", sets:"3x10", rest:"60s",
+        intro:"A clássica flexão, mas com os joelhos apoiados no chão — perfeita para iniciantes aprenderem o movimento correto antes de fazer a versão mais difícil.",
+        steps:["🧎 Ajoelhe-se no chão e apoie as duas mãos no chão, um pouco mais afastadas que a largura dos ombros.","📏 Endireite o corpo: da cabeça ao joelho deve formar uma linha reta. Não levante o bumbum nem afunde a barriga.","🤜 Dobre os cotovelos e desça o peito em direção ao chão. Os cotovelos devem ir levemente para trás, não para os lados.","⬇️ Desça até o peito quase tocar o chão (ou até onde conseguir).","💨 Inspire descendo. Empurre o chão com as duas mãos e suba expirando.","🔁 Repita 10 vezes. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: deixar o quadril cair (barriga perto do chão) ou levantar o bumbum demais. Seu corpo deve ser uma prancha rígida do joelho à cabeça.",
+        feel:"Você deve sentir: peito, ombro e a parte de trás dos braços (tríceps) trabalhando." },
+      { name:"Peck Deck (borboleta)", sets:"3x15", rest:"60s",
+        intro:"Máquina que isola o peito. O movimento lembra um pássaro abrindo e fechando as asas — por isso o apelido 'borboleta'. Ótimo para o final do treino.",
+        steps:["🪑 Sente na máquina e ajuste o assento para que os seus cotovelos fiquem na altura dos seus ombros quando apoiados nas almofadas.","💺 Encoste as costas totalmente no encosto e coloque os pés firmes no chão.","💪 Apoie os antebraços nas almofadas da máquina (ou segure as alças).","🌳 Feche os braços para frente devagar, como se você fosse abraçar uma árvore enorme.","✊ Quando os braços se encontrarem no centro, aperte o peito por 2 segundos.","↩️ Abra os braços de volta DEVAGAR — leve 3 segundos para abrir. Sinta o peito esticar.","🔁 Repita 15 vezes. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: usar impulso (jogar o corpo para frente) para fechar os braços. Isso tira o trabalho do peito. O movimento deve ser lento, controlado e o encosto deve ficar encostado o tempo todo.",
+        feel:"Você deve sentir: o peito inteiro contraindo quando fecha os braços, e um bom alongamento quando abre." }
+    ]
+  },
+  Terça: {
+    label:"TER", focus:"COSTAS", emoji:"🔙", color:"#5C8FFF",
+    exercises:[
+      { name:"Puxada Frontal (pegada larga)", sets:"3x12", rest:"90s",
+        intro:"Esse exercício trabalha o 'latíssimo do dorso' — o músculo grande das costas que dá aquele formato de 'V' ao corpo. Você vai puxar uma barra de cima para baixo.",
+        steps:["🪑 Sente na máquina e encaixe as coxas sob o apoio acolchoado (ele segura você no lugar).","🤲 Levante os braços e segure a barra com as mãos mais abertas que os ombros. As palmas ficam viradas para longe de você.","📐 Incline levemente o tronco para trás — uns 15°, como se fosse reclinar levemente numa cadeira.","⬇️ Puxe a barra para baixo em direção ao seu pescoço/clavícula (não abaixo disso).","🤜 Enquanto puxa, pense em 'colocar os cotovelos no bolso' — isso ativa melhor as costas.","✊ Quando a barra chegar perto do peito, aperte as costas por 1 segundo.","⬆️ Suba a barra devagar, resistindo ao peso, até os braços ficarem estendidos novamente. Isso é 1 repetição.","🔁 Repita 12 vezes. Descanse 90 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: puxar a barra para a NUCA (atrás da cabeça). Isso machuca a cervical! Sempre puxe para a frente, em direção ao peito/clavícula.",
+        feel:"Você deve sentir: as costas 'abrindo' quando sobe e contraindo quando puxa." },
+      { name:"Remada Baixa na Polia", sets:"3x12", rest:"90s",
+        intro:"Trabalha as costas puxando um cabo em direção à barriga. O triângulo é a peça que você encaixa no cabo para este exercício.",
+        steps:["🧍 Sente na máquina com os pés apoiados na plataforma. Joelhos levemente dobrados — não completamente retos.","🤲 Segure o triângulo com as duas mãos. Braços estendidos para frente.","🏛️ Endireite o tronco — sente ereto! Não curve as costas.","😤 Inspire. Puxe o triângulo em direção ao seu umbigo dobrando os cotovelos.","🫴 No final do movimento, abra o peito para frente e aperte as escápulas (como se quisesse esmagar um lápis entre elas).","↩️ Estenda os braços devagar de volta para frente — controle o peso, não deixe ele te puxar. Isso é 1 repetição.","🔁 Repita 12 vezes. Descanse 90 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: balançar o tronco para trás para puxar. O tronco deve ficar quase parado — só os braços e as costas se movem.",
+        feel:"Você deve sentir: as costas (meio das costas, próximo à espinha) apertando quando puxa o triângulo." },
+      { name:"Remada Unilateral com Haltere", sets:"3x12", rest:"75s",
+        intro:"Exercício feito com um braço de cada vez. Isso corrige diferenças de força entre os dois lados. Você vai precisar de um banco e um haltere.",
+        steps:["🏋️ Coloque um haltere no chão ao lado do banco. Vamos começar pelo lado direito.","🧎 Apoie o joelho ESQUERDO e a mão ESQUERDA no banco. Seu corpo fica paralelo ao chão, como uma mesa.","🤲 Com a mão direita, pegue o haltere no chão. Braço direito esticado para baixo.","⬆️ Puxe o haltere para cima dobrando o cotovelo, como se fosse dar a partida numa moto antiga. O cotovelo sobe reto para cima, não para os lados.","✊ Quando o haltere chegar perto da sua costela, aperte as costas por 1 segundo.","⬇️ Desça o haltere devagar até o braço ficar esticado novamente. Isso é 1 repetição.","🔁 Faça 12 repetições com o lado direito, depois troque para o esquerdo. Os dois lados = 1 série. Faça 3 séries."],
+        mistakes:"Erro de iniciante: girar o tronco para ajudar a puxar (o ombro sobe junto). Os ombros devem ficar nivelados — só o braço e as costas trabalham.",
+        feel:"Você deve sentir: um lado das costas trabalhando de cada vez. Deve sentir 'a costela apertar'." },
+      { name:"Pulldown com Braços Retos", sets:"3x15", rest:"60s",
+        intro:"Exercício na polia alta, mas diferente da puxada — aqui os braços ficam retos o tempo todo. Trabalha a parte de baixo das costas (latíssimo).",
+        steps:["⚙️ Encaixe uma barra reta (ou corda) no cabo da polia ALTA.","🧍 Fique em pé de frente para a máquina, a uns 60cm de distância.","🤲 Segure a barra com as duas mãos, braços estendidos para cima na frente de você.","📐 Incline o tronco levemente para frente (umas 20°).","⬇️ Puxe a barra para baixo em arco — como se fosse desenhar uma curva — mantendo os braços retos.","✊ Desça até a barra chegar perto das suas coxas. Aperte as costas por 1 segundo.","⬆️ Suba a barra devagar no mesmo arco. Sinta as costas alongando. Isso é 1 repetição.","🔁 Repita 15 vezes. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: dobrar os cotovelos para conseguir puxar mais. Se precisar dobrar os cotovelos, o peso está pesado demais. Reduza o peso e mantenha os braços retos.",
+        feel:"Você deve sentir: as costas (principalmente a parte de baixo das costas, nas laterais) trabalhando a cada repetição." },
+      { name:"Hiperextensão no Banco", sets:"3x12", rest:"60s",
+        intro:"Exercício para fortalecer a lombar (parte baixa das costas), glúteos e posterior de coxa. Feito no banco romano — aquele banco inclinado com apoio para os pés.",
+        steps:["🏋️ Suba no banco romano e encaixe os tornozelos sob o apoio acolchoado. Os quadris ficam na borda do banco.","🤲 Cruze os braços no peito ou coloque as mãos atrás da cabeça (mais difícil).","⬇️ Deixe o tronco descer em direção ao chão de forma controlada — como uma dobradiça no seu quadril.","⬆️ Suba de volta até o seu corpo ficar em linha reta (paralelo ao chão). PARE aqui.","✊ Aperte o glúteo e a lombar por 1 segundo no topo.","↩️ Desça novamente devagar. Isso é 1 repetição.","🔁 Repita 12 vezes. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: subir demais, passando da linha reta (hiperextender). Isso coloca pressão desnecessária na coluna. Suba APENAS até o corpo ficar reto — nem mais, nem menos.",
+        feel:"Você deve sentir: a lombar e o glúteo contraindo quando sobe. Se sentir dor pontual na coluna, pare e ajuste a posição." }
+    ]
+  },
+  Quarta: {
+    label:"QUA", focus:"PERNAS", emoji:"🦵", color:"#00C896",
+    exercises:[
+      { name:"Agachamento no Smith", sets:"3x12", rest:"90s",
+        intro:"O agachamento é o rei dos exercícios de perna! A versão no Smith (barra guiada) é mais segura para iniciantes pois a barra só se move para cima e para baixo, ajudando no equilíbrio.",
+        steps:["⚙️ Ajuste a barra do Smith na altura dos seus ombros. Passe por baixo e apoie a barra na parte de cima das suas costas — sobre o trapézio (o músculo entre o pescoço e os ombros). NUNCA coloque no pescoço.","👟 Posicione os pés na largura dos seus ombros, com as pontas levemente para fora (como um 'V' aberto).","🔓 Gire a barra para destravar. Fique ereto com o peito aberto.","⬇️ Dobre os joelhos e desça como se fosse sentar numa cadeira bem baixa atrás de você. Mantenha o peito aberto para cima.","📐 Desça até as coxas ficarem paralelas ao chão (90° no joelho). Se não conseguir no começo, vá até onde sentir conforto.","👀 Os joelhos devem sempre apontar na mesma direção das pontas dos pés — não deixe caírem para dentro.","⬆️ Empurre o chão com os pés e suba. Expire subindo. Isso é 1 repetição.","🔁 Repita 12 vezes. Descanse 90 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: deixar os joelhos caírem para dentro ao subir (parece um 'X'). Isso machuca o joelho. Pense em 'empurrar os joelhos para fora' durante todo o movimento.",
+        feel:"Você deve sentir: quadríceps (frente da coxa), glúteos e posterior de coxa trabalhando. Vai queimar bastante no final das séries!" },
+      { name:"Leg Press 45°", sets:"3x15", rest:"90s",
+        intro:"Máquina inclinada onde você empurra uma plataforma com os pés. Muito segura e eficiente para trabalhar as coxas e glúteos.",
+        steps:["🪑 Sente na máquina e encoste as costas e a cabeça no suporte acolchoado.","👟 Coloque os pés na plataforma na largura dos ombros, um pouco acima do centro da plataforma.","🔓 Segure as travas laterais, empurre a plataforma levemente e solte as travas girando-as.","⬇️ Dobre os joelhos e desça a plataforma devagar até os joelhos formarem 90°. Os joelhos devem apontar para fora, alinhados com os pés.","⛔ IMPORTANTE: não deixe os joelhos chegarem perto do seu peito — isso arredonda a lombar e pode machucar.","⬆️ Empurre a plataforma para cima com os dois pés ao mesmo tempo. Não trave os joelhos lá em cima.","🔁 Repita 15 vezes. Ao terminar, trave as travas antes de soltar os pés. Descanse 90 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: deixar as costas saírem do apoio (levantarem) quando desce. Se isso acontecer, você está descendo demais ou o peso está pesado demais.",
+        feel:"Você deve sentir: toda a frente e o fundo da coxa trabalhando. Com o pé mais alto na plataforma, sente mais o glúteo. Com o pé mais baixo, sente mais o quadríceps." },
+      { name:"Cadeira Extensora", sets:"3x15", rest:"60s",
+        intro:"Máquina que trabalha exclusivamente o quadríceps (frente da coxa). Simples de usar e muito eficaz.",
+        steps:["🪑 Sente na cadeira e ajuste o apoio do tornozelo para ficar logo acima do seu pé (não no meio da canela).","💺 Encoste as costas no suporte e segure as alças laterais.","⬆️ Estenda as pernas para frente até ficarem completamente retas.","✊ Segure com as pernas retas por 2 segundos — sinta o quadríceps (frente da coxa) contraído.","⬇️ Dobre os joelhos devagar de volta até 90°. Leve pelo menos 3 segundos para descer. Isso é 1 repetição.","🔁 Repita 15 vezes. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: balançar o corpo para ajudar a subir o peso. Se você precisar jogar o tronco para frente, o peso está pesado demais. Diminua.",
+        feel:"Você deve sentir: a frente da coxa (quadríceps) queimar bastante, especialmente quando segura no topo." },
+      { name:"Mesa Flexora", sets:"3x15", rest:"60s",
+        intro:"Máquina para trabalhar o posterior de coxa (a parte de trás da coxa). Você deita de bruços e curva os joelhos.",
+        steps:["🛏️ Deite de bruços na máquina. Posicione o apoio acolchoado logo acima dos calcanhares (atrás dos tornozelos).","🤲 Segure as alças laterais da máquina para se estabilizar.","⬆️ Curve os joelhos puxando os calcanhares em direção ao bumbum.","✊ Quando chegar no topo (calcanhares próximos ao glúteo), aperte por 2 segundos.","⬇️ Desça os pés devagar até as pernas ficarem quase retas. Isso é 1 repetição.","🔁 Repita 15 vezes. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: levantar o quadril do banco para conseguir puxar mais. O quadril deve ficar colado na máquina o tempo todo.",
+        feel:"Você deve sentir: a parte de trás da coxa (posterior) trabalhando. Se sentir cãibra no posterior, é sinal que esse músculo está fraco — normal para iniciantes, vai melhorar!" },
+      { name:"Panturrilha em Pé (no step)", sets:"3x20", rest:"45s",
+        intro:"Exercício simples para fortalecer a panturrilha (batata da perna). Feito num step ou degrau para ter amplitude total.",
+        steps:["👟 Fique em pé na borda de um step ou degrau, com apenas a parte da frente dos pés apoiada. Os calcanhares ficam no ar.","🤝 Segure algo (parede ou máquina) para equilíbrio.","⬇️ Desça o calcanhar abaixo do nível do step, até sentir a panturrilha esticar bem. Isso é o alongamento.","⬆️ Suba nas pontas dos pés o máximo que conseguir. Empurre bem para cima.","✊ Segure no topo por 1 segundo, depois desça devagar. Isso é 1 repetição.","🔁 Repita 20 vezes. Descanse 45 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: fazer o movimento rápido e sem amplitude — nem sobe bem alto nem desce bem baixo. O segredo da panturrilha é: AMPLITUDE TOTAL e movimento LENTO.",
+        feel:"Você deve sentir: a panturrilha inteira esticando na descida e contraindo na subida. Vai queimar muito nas últimas repetições!" }
+    ]
+  },
+  Quinta: {
+    label:"QUI", focus:"OMBROS", emoji:"🏋️", color:"#FFB84B",
+    exercises:[
+      { name:"Desenvolvimento com Halteres", sets:"3x12", rest:"90s",
+        intro:"Exercício principal para os ombros. Você vai empurrar os halteres para cima da cabeça. Trabalha o deltóide frontal e lateral.",
+        steps:["🪑 Sente num banco com encosto ou fique em pé com a coluna bem ereta.","🤲 Segure um haltere em cada mão. Levante os braços até os halteres ficarem na altura dos ombros, cotovelos dobrados a 90° (como um poste com dois braços para o lado).","👐 As palmas das mãos ficam viradas para frente.","😤 Inspire. Empurre os dois halteres para cima ao mesmo tempo até os braços ficarem quase retos acima da cabeça.","⛔ Não trave os cotovelos lá em cima — deixe levemente dobrados.","⬇️ Desça os halteres devagar de volta à posição inicial (ombros). Isso é 1 repetição.","🔁 Repita 12 vezes. Descanse 90 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: arquear as costas para trás quando empurra o peso. Isso machuca a lombar. Contraia o abdômen durante todo o exercício para proteger a coluna.",
+        feel:"Você deve sentir: a parte da frente e do meio do ombro trabalhando." },
+      { name:"Elevação Lateral com Halteres", sets:"3x15", rest:"60s",
+        intro:"Exercício para a parte lateral do ombro — o que dá largura aos ombros. Use pesos leves! Iniciantes sempre exageram no peso aqui.",
+        steps:["🧍 Fique em pé com um haltere em cada mão ao lado do corpo. Palmas viradas para as suas coxas.","📐 Dobre levemente os cotovelos (uns 10°) e TRAVE assim — não muda mais durante o exercício.","⬆️ Levante os dois braços para os lados ao mesmo tempo, como um pássaro abrindo as asas.","📏 Suba até os braços ficarem paralelos ao chão (na altura dos ombros). Os cotovelos ficam levemente mais altos que os punhos.","✊ Segure 1 segundo no topo.","⬇️ Desça devagar, contando 3 segundos. Isso é 1 repetição.","🔁 Repita 15 vezes. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: usar peso pesado e jogar o corpo para o lado para ajudar a subir. Com isso você trabalha mais o trapézio do que o ombro. Use peso bem leve (2 a 5kg para iniciantes) e foque na técnica.",
+        feel:"Você deve sentir: a parte lateral do ombro queimar. Se sentir no pescoço ou trapézio, o peso está pesado ou você está encolhendo o ombro." },
+      { name:"Elevação Frontal com Anilha", sets:"3x12", rest:"60s",
+        intro:"Aqui você segura uma anilha com as duas mãos e levanta para frente. Trabalha a parte da frente do ombro.",
+        steps:["🧍 Fique em pé segurando uma anilha com as duas mãos pelos lados (como um volante), na frente das suas coxas.","📐 Dobre os cotovelos levemente e trave.","⬆️ Levante a anilha para frente e para cima até ela chegar na altura dos seus olhos.","⛔ Não balance o tronco para trás para ajudar — mantenha o corpo firme.","✊ Segure 1 segundo no topo.","⬇️ Desça devagar até a anilha voltar para a frente das coxas. Isso é 1 repetição.","🔁 Repita 12 vezes. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: dobrar e esticar os cotovelos durante o movimento (vira um exercício diferente). Os braços devem ficar com a mesma curvatura do início ao fim.",
+        feel:"Você deve sentir: a parte frontal do ombro trabalhando." },
+      { name:"Crucifixo Invertido na Máquina", sets:"3x15", rest:"60s",
+        intro:"Trabalha a parte de trás do ombro (deltóide posterior) — muito importante para postura e para não ter ombros caídos para frente.",
+        steps:["🪑 Sente de FRENTE para o encosto da máquina de peck deck (ao contrário do normal).","⚙️ Ajuste as alças para ficarem na altura dos ombros.","🤲 Segure as alças com os braços levemente dobrados na frente de você.","↔️ Abra os braços para os lados como se fosse voar, mantendo a leve dobra nos cotovelos.","✊ Quando os braços estiverem abertos (alinhados com os ombros), aperte as costas por 1 segundo.","↩️ Feche os braços de volta devagar. Isso é 1 repetição.","🔁 Repita 15 vezes. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: encolher os ombros para cima durante o movimento. Mantenha os ombros 'para baixo e para trás' durante todo o exercício.",
+        feel:"Você deve sentir: a parte de trás do ombro e as costas (entre as escápulas) trabalhando." },
+      { name:"Encolhimento com Halteres", sets:"3x15", rest:"60s",
+        intro:"Exercício para o trapézio — o músculo grande em forma de triângulo entre o pescoço e os ombros.",
+        steps:["🧍 Fique em pé com um haltere em cada mão ao lado do corpo. Braços completamente retos.","⬆️ Encolha os ombros para cima em direção às orelhas, como se quisesse dizer 'não sei' com os ombros.","✊ No topo, segure por 2 segundos — sinta o trapézio contraído.","⬇️ Desça os ombros lentamente até a posição relaxada. Isso é 1 repetição.","🔁 Repita 15 vezes. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: rolar os ombros (fazer um círculo). Isso não ativa melhor o trapézio e pode machucar. O movimento é 100% vertical: sobe e desce, sem girar.",
+        feel:"Você deve sentir: a região entre o pescoço e os ombros (trapézio) contraindo." }
+    ]
+  },
+  Sexta: {
+    label:"SEX", focus:"BÍCEPS + TRÍCEPS", emoji:"💥", color:"#C84BFF",
+    exercises:[
+      { name:"Rosca Direta com Barra", sets:"3x12", rest:"75s",
+        intro:"O exercício mais clássico para o bíceps (aquele músculo que aparece quando você 'faz um músculo'). Você vai curvar os braços segurando uma barra.",
+        steps:["🧍 Fique em pé segurando a barra com as duas mãos na largura dos ombros. As palmas ficam viradas para cima.","📌 Cole os cotovelos nas laterais do seu corpo. IMPORTANTE: os cotovelos não se movem do lugar durante o exercício.","⬆️ Curve os braços levantando a barra em direção ao seu peito/queixo.","✊ Quando a barra chegar no topo (braços dobrados), aperte o bíceps por 1 segundo.","⬇️ Desça a barra DEVAGAR, contando 3 segundos, até os braços ficarem quase retos. Isso é 1 repetição.","🔁 Repita 12 vezes. Descanse 75 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: jogar o corpo para trás (arquear a lombar) para ajudar a subir a barra. Isso significa que o peso está pesado demais ou você está cansado. O bíceps deve fazer TODO o trabalho.",
+        feel:"Você deve sentir: o bíceps (frente do braço) contraindo ao subir e alongando ao descer." },
+      { name:"Rosca Martelo com Halteres", sets:"3x12", rest:"60s",
+        intro:"Parecido com a rosca direta, mas a posição da mão é diferente — o polegar aponta para cima, como se você segurasse um martelo. Trabalha o bíceps e o braquial (músculo abaixo do bíceps).",
+        steps:["🧍 Fique em pé com um haltere em cada mão ao lado do corpo. O polegar aponta para frente (posição de martelo).","📌 Cole os cotovelos nas laterais do corpo.","⬆️ Curve um braço de cada vez, levando o haltere em direção ao ombro. O polegar continua apontando para cima durante todo o movimento.","✊ No topo, aperte por 1 segundo.","⬇️ Desça devagar e repita com o outro braço. Os dois braços = 1 repetição.","🔁 Repita 12 vezes. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: girar o pulso durante o movimento (virando a palma para cima). Mantenha o polegar apontando para cima do início ao fim.",
+        feel:"Você deve sentir: o bíceps e também um pouco mais na parte externa do braço (braquial) comparado à rosca direta." },
+      { name:"Rosca Concentrada", sets:"3x12", rest:"60s",
+        intro:"Exercício isolado para o bíceps — feito sentado, com o cotovelo apoiado na coxa. É difícil fazer errado e dá uma contração muito boa no bíceps.",
+        steps:["🪑 Sente na ponta de um banco com as pernas abertas.","🏋️ Pegue um haltere com a mão direita e apoie a parte de trás do braço direito na parte interna da coxa direita.","⬇️ Deixe o braço esticado para baixo segurando o haltere.","⬆️ Curve o braço levando o haltere em direção ao ombro.","✊ No topo, aperte o bíceps FORTE por 2 segundos.","⬇️ Desça devagar até o braço ficar quase reto. Isso é 1 repetição.","🔁 Faça 12 repetições com o braço direito, depois troque para o esquerdo. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: levantar o ombro ou mover o cotovelo da coxa para ajudar a puxar. O cotovelo fica fixo na coxa — só o antebraço se move.",
+        feel:"Você deve sentir: uma contração muito intensa e isolada no bíceps. É normal sentir bastante no final das séries." },
+      { name:"Tríceps Pulley na Corda", sets:"3x15", rest:"60s",
+        intro:"Exercício para o tríceps (parte de trás do braço) usando a máquina de cabos. A corda permite uma contração melhor no final do movimento.",
+        steps:["⚙️ Encaixe a corda no cabo da polia ALTA.","🧍 Fique em pé de frente para a máquina. Segure uma ponta da corda em cada mão.","📌 Cole os cotovelos nas laterais do corpo, na altura da cintura. Os cotovelos são o PIVÔ — não se movem.","⬇️ Estenda os braços para baixo empurrando a corda. No final do movimento, separe as pontas da corda abrindo as mãos para os lados.","✊ Com os braços esticados, aperte o tríceps por 1 segundo.","⬆️ Suba a corda de volta devagar até os antebraços ficarem paralelos ao chão. Isso é 1 repetição.","🔁 Repita 15 vezes. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: mover os cotovelos para frente e para trás junto com o movimento. Os cotovelos são o pivô e ficam fixos. Se eles se moverem, você está usando o ombro em vez do tríceps.",
+        feel:"Você deve sentir: a parte de trás do braço (tríceps) contraindo a cada repetição." },
+      { name:"Tríceps Testa com Haltere", sets:"3x12", rest:"60s",
+        intro:"Exercício no banco onde você abaixa o haltere em direção à testa. Trabalha bastante o tríceps com amplitude total.",
+        steps:["🛏️ Deite de costas no banco. Segure um haltere com as DUAS mãos (envolva as duas mãos em volta do haltere).","⬆️ Levante o haltere acima do peito com os braços quase retos. Os cotovelos apontam para o teto.","⬇️ Dobre apenas os cotovelos, abaixando o haltere em direção à sua testa. Os cotovelos não se abrem para os lados.","📏 Desça até os cotovelos formarem 90°. O haltere fica próximo da testa ou um pouco atrás da cabeça.","⬆️ Estenda os cotovelos de volta para cima empurrando o haltere. Isso é 1 repetição.","🔁 Repita 12 vezes. Descanse 60 segundos. Faça 3 séries."],
+        mistakes:"Erro de iniciante: deixar os cotovelos 'abrirem' para os lados durante o movimento. Os cotovelos devem apontar para o teto o tempo todo — se abrirem, vira um supino (peito) em vez de tríceps.",
+        feel:"Você deve sentir: a parte de trás do braço (tríceps) trabalhando, especialmente ao estender os cotovelos." }
+    ]
+  }
+};
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let activeDay = "Segunda";
+let completed = JSON.parse(localStorage.getItem("treino-completed") || "{}");
+let expanded = {};
+let activeTabs = {};
+
+function saveCompleted() {
+  localStorage.setItem("treino-completed", JSON.stringify(completed));
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function getColor() { return DATA[activeDay].color; }
+
+function totalCompleted() {
+  return DAYS.reduce((acc, d) =>
+    acc + DATA[d].exercises.filter((_, i) => completed[`${d}-${i}`]).length, 0);
+}
+
+function renderHeader() {
+  const d = DATA[activeDay];
+  const done = d.exercises.filter((_, i) => completed[`${activeDay}-${i}`]).length;
+  const pct = (done / d.exercises.length) * 100;
+
+  document.getElementById("glow").style.background = d.color;
+  document.getElementById("header-label").style.color = d.color;
+  document.getElementById("header-title").textContent = activeDay.toUpperCase();
+  document.getElementById("header-focus").textContent = `${d.emoji} ${d.focus}`;
+  document.getElementById("today-count").textContent = `${done}/${d.exercises.length}`;
+  document.getElementById("today-count").style.color = d.color;
+  document.getElementById("week-count").textContent = `${totalCompleted()}/25`;
+  document.getElementById("progress-fill").style.width = pct + "%";
+  document.getElementById("progress-fill").style.background = `linear-gradient(90deg,${d.color}66,${d.color})`;
+}
+
+function renderDayNav() {
+  const nav = document.getElementById("day-nav");
+  nav.innerHTML = "";
+  DAYS.forEach(day => {
+    const d = DATA[day];
+    const isActive = day === activeDay;
+    const allDone = d.exercises.filter((_, i) => completed[`${day}-${i}`]).length === 5;
+    const btn = document.createElement("button");
+    btn.className = "day-btn" + (isActive ? " active" : "");
+    if (isActive) btn.style.background = d.color;
+    btn.innerHTML = `<span>${d.label}</span>${allDone ? '<span class="done-dot">✅</span>' : ''}`;
+    btn.onclick = () => { activeDay = day; expanded = {}; activeTabs = {}; render(); };
+    nav.appendChild(btn);
+  });
+}
+
+function renderExercises() {
+  const list = document.getElementById("ex-list");
+  const d = DATA[activeDay];
+  const color = d.color;
+  let html = "";
+
+  d.exercises.forEach((ex, i) => {
+    const key = `${activeDay}-${i}`;
+    const isDone = !!completed[key];
+    const isOpen = !!expanded[key];
+    const tab = activeTabs[key] || "steps";
+
+    let expandedHtml = "";
+    if (isOpen) {
+      const stepsHtml = ex.steps.map((s, si) => `
+        <div class="step-item">
+          <span class="step-num" style="background:${color}22;color:${color}">${si+1}</span>
+          <span class="step-text">${s}</span>
+        </div>`).join("");
+
+      expandedHtml = `
+        <div class="ex-expanded">
+          <div class="intro-box" style="background:${color}11;border:1px solid ${color}22">${ex.intro}</div>
+          <div class="tabs">
+            <button class="tab-btn ${tab==='steps'?'active':''}" style="${tab==='steps'?'background:'+color+';color:#000':''}" onclick="setTab(event,'${key}','steps')">📋 Como Fazer</button>
+            <button class="tab-btn ${tab==='mistakes'?'active':''}" style="${tab==='mistakes'?'background:'+color+';color:#000':''}" onclick="setTab(event,'${key}','mistakes')">⚠️ Erros</button>
+            <button class="tab-btn ${tab==='feel'?'active':''}" style="${tab==='feel'?'background:'+color+';color:#000':''}" onclick="setTab(event,'${key}','feel')">🔥 O que sentir</button>
+          </div>
+          ${tab==='steps' ? `<div>${stepsHtml}</div>` : ''}
+          ${tab==='mistakes' ? `<div class="info-box mistake-box">${ex.mistakes}</div>` : ''}
+          ${tab==='feel' ? `<div class="info-box" style="background:${color}0D;border:1px solid ${color}25">${ex.feel}</div>` : ''}
+        </div>`;
+    }
+
+    html += `
+      <div class="ex-card ${isDone?'done':''}" id="card-${key}">
+        <div class="ex-row">
+          <div class="check ${isDone?'done':''}" style="${isDone?'background:'+color:''}" onclick="toggleDone('${activeDay}',${i})"></div>
+          <div class="ex-info">
+            <div class="ex-name ${isDone?'done':''}" onclick="toggleDone('${activeDay}',${i})">${ex.name}</div>
+            <div class="ex-badges">
+              <span class="badge" style="background:${color}22;color:${color}">${ex.sets}</span>
+              <span class="badge badge-rest">⏱ ${ex.rest}</span>
+              <button class="how-btn" onclick="toggleExpand(event,'${key}')">${isOpen?'▲ Fechar':'📋 Como fazer'}</button>
+            </div>
+          </div>
+          <div class="ex-num" style="color:${color}18">${String(i+1).padStart(2,'0')}</div>
+        </div>
+        ${expandedHtml}
+      </div>`;
+  });
+
+  const done = d.exercises.filter((_, i) => completed[`${activeDay}-${i}`]).length;
+  if (done === d.exercises.length && done > 0) {
+    html += `
+      <div class="complete-banner" style="background:${color}0F;border:1px solid ${color}33">
+        <div class="trophy">🏆</div>
+        <div class="title">DIA CONCLUÍDO!</div>
+        <div class="sub">Ótimo trabalho! Descanse bem e hidrate-se 💧</div>
+      </div>`;
+  }
+
+  list.innerHTML = html;
+}
+
+function render() {
+  renderHeader();
+  renderDayNav();
+  renderExercises();
+}
+
+// ─── ACTIONS ─────────────────────────────────────────────────────────────────
+window.toggleDone = (day, idx) => {
+  const key = `${day}-${idx}`;
+  completed[key] = !completed[key];
+  saveCompleted();
+  render();
+};
+
+window.toggleExpand = (e, key) => {
+  e.stopPropagation();
+  expanded[key] = !expanded[key];
+  if (!activeTabs[key]) activeTabs[key] = "steps";
+  render();
+};
+
+window.setTab = (e, key, tab) => {
+  e.stopPropagation();
+  activeTabs[key] = tab;
+  render();
+};
+
+// ─── PWA: SERVICE WORKER ─────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js').then(reg => {
+    console.log('[SW] Registrado com sucesso:', reg.scope);
+  }).catch(err => console.warn('[SW] Erro ao registrar:', err));
+}
+
+// ─── PWA: INSTALL PROMPT ──────────────────────────────────────────────────────
+let deferredPrompt = null;
+const installBanner = document.getElementById("install-banner");
+
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBanner.style.display = "block";
+});
+
+document.getElementById("confirm-install").onclick = async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  installBanner.style.display = "none";
+};
+
+document.getElementById("close-install").onclick = () => {
+  installBanner.style.display = "none";
+};
+
+window.addEventListener("appinstalled", () => {
+  installBanner.style.display = "none";
+  deferredPrompt = null;
+});
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
